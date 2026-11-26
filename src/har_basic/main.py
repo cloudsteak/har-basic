@@ -17,7 +17,7 @@ def check_urls(urls: list[str]) -> None:
 
 
 def main() -> None:
-    check_urls(["https://httpbin.org/get", "https://httpbin.org/ip", "https://httpbin.org/useragent"])
+    check_urls(["https://httpbin.org/get", "https://httpbin.org/ip", "https://httpbin.org/user-agent"])
 
 
 if __name__ == "__main__":
