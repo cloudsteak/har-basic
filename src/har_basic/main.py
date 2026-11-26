@@ -17,6 +17,7 @@ def check_urls(urls: list[str]) -> None:
 
 
 def main() -> None:
+    print("Url ellenőrzés indul")
     check_urls(["https://httpbin.org/get", "https://httpbin.org/ip", "https://httpbin.org/user-agent"])
 
 
