@@ -175,6 +175,31 @@ Discover → Isolate → Build → Verify → Hand off
 
 Fontos szabály: a commitot, a pusht és a lezárást **mindig ember végzi**.
 
+### Egy változás útja az eredeti kódba (PR-flow)
+
+Az 1–4. lépés a worktree-ben (az ágens területén) történik, az 5–7. az átvétel, ezt az ember végzi.
+
+1. `har env launch 1`
+   Új, izolált worktree és branch az `init` aktuális állapotából. A kiírt WORK DIR-ben dolgozz, a fő mappában ne.
+2. `cd <WORK DIR>` majd `pwd` és `git branch --show-current`
+   Ellenőrizd, hogy a worktree-ben vagy-e (a branch neve `init-<sha4>-har-agent-1-<rand>`). A fő mappában (`init`) nincs commit gate.
+3. Szerkesztés, közben `har env verify 1`
+   Gyors visszajelzés a quick szintű stage-ekkel.
+4. `har env verify 1 --full`, majd `git add -A` és `git commit`
+   A teljes ellenőrzés bizonyítékot rögzít a kód pontos állapotáról (tree hash), a commit gate csak ezzel enged commitolni. Mindent stage-elj, ami verify-olva lett.
+5. Push és PR a szerkesztőben (Publish Branch, Create Pull Request)
+   A PR base-e az `init`, nem a `main`.
+6. `har env complete 1`
+   Lezárja a slotot, és újrahasznosítja a meglévő bizonyítékot, ha a kód nem változott (különben `--verify` kell). A branch megmarad. A worktree-t előtte zárd be az editorból.
+7. Merge a GitHubon, majd Pull a fő mappában
+   A PR beolvasztása viszi vissza a változást az eredeti kódba. Utána a slot branch törölhető.
+
+Jó tudni:
+
+- A commit gate git hookokon alapul: `har hooks status` mutatja, telepítve vannak-e (`har hooks install` teszi fel).
+- A bizonyíték (`.har/validations/`) helyi, a PR nem hordozza. A CI-nak ugyanazokat a parancsokat kell futtatnia, ami a `stages.json`-ban van.
+- A har-basic-ben ellenőriztük: a commit fájának hash-e megegyezett a verify `treeHash`-ével.
+
 ---
 
 ## 5. Tapasztalatok és hibakeresés (har-basic)
