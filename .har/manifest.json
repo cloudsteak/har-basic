@@ -1,0 +1,34 @@
+{
+  "version": "1",
+  "runtimeVersion": "1.0.0",
+  "cliVersion": "1.31.0",
+  "outputDir": ".har",
+  "createdAt": "2026-11-26T20:39:14.891Z",
+  "updatedAt": "2026-11-26T20:39:14.891Z",
+  "adaptationSummary": "CLI profile copied — adapt with your coding agent (see .har/ADAPT-PROMPT.md).",
+  "profile": "cli",
+  "fileChecksums": {
+    ".gitignore": "cd13b779520b9ba6",
+    "README.md": "24bb28f3c724f85d",
+    "STAGES.md": "b7eccf2bc2bbc017",
+    "docker-compose.agent.yml": "643ba51e2378fe28",
+    "gitignore.template": "cd13b779520b9ba6",
+    "harness.env": "a8cc3e1dca4b98cc",
+    "justfile": "446701c852927ce1",
+    "stages.json": "e1d0fa9c7b60faaf",
+    "stages/README.sh": "23b2e858dd2dc27a",
+    "stages/readiness.sh": "8c8d7574d52d54b4"
+  },
+  "templateChecksums": {
+    "STAGES.md": "b7eccf2bc2bbc017",
+    "lib/verify-runner.mjs": "015f3ec85247b987",
+    "stages/README.sh": "23b2e858dd2dc27a",
+    "stages/readiness.sh": "8c8d7574d52d54b4",
+    "docker-compose.agent.yml": "643ba51e2378fe28",
+    ".gitignore": "cd13b779520b9ba6",
+    "harness.env": "a8cc3e1dca4b98cc",
+    "justfile": "446701c852927ce1",
+    "stages.json": "e1d0fa9c7b60faaf",
+    "README.md": "24bb28f3c724f85d"
+  }
+}
