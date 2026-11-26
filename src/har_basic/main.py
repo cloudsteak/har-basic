@@ -11,8 +11,13 @@ def check_url(url: str) -> None:
         print(f"Hiba történt a hívás során: {e}")
 
 
+def check_urls(urls: list[str]) -> None:
+    for url in urls:
+        check_url(url)
+
+
 def main() -> None:
-    check_url("https://httpbin.org/get")
+    check_urls(["https://httpbin.org/get", "https://httpbin.org/ip", "https://httpbin.org/useragent"])
 
 
 if __name__ == "__main__":

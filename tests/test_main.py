@@ -1,6 +1,6 @@
 import requests
 
-from har_basic.main import check_url
+from har_basic.main import check_url, check_urls
 
 
 def test_check_url_success(mocker, capsys):
@@ -32,3 +32,29 @@ def test_check_url_http_error(mocker, capsys):
     # Ellenőrzés
     captured = capsys.readouterr()
     assert "Hiba történt a hívás során" in captured.out
+
+
+def test_check_urls_checks_each_url(mocker, capsys):
+    mock_response = mocker.Mock()
+    mock_response.status_code = 200
+    mock_get = mocker.patch("har_basic.main.requests.get", return_value=mock_response)
+
+    check_urls(["https://pelda.hu/a", "https://pelda.hu/b"])
+
+    assert mock_get.call_count == 2
+    captured = capsys.readouterr()
+    assert captured.out.count("Sikeres hívás! HTTP státuszkód: 200") == 2
+
+
+def test_check_urls_continues_after_error(mocker, capsys):
+    ok = mocker.Mock()
+    ok.status_code = 200
+    bad = mocker.Mock()
+    bad.raise_for_status.side_effect = requests.exceptions.HTTPError("500 Server Error")
+    mocker.patch("har_basic.main.requests.get", side_effect=[bad, ok])
+
+    check_urls(["https://pelda.hu/rossz", "https://pelda.hu/jo"])
+
+    captured = capsys.readouterr()
+    assert "Hiba történt a hívás során" in captured.out
+    assert "Sikeres hívás! HTTP státuszkód: 200" in captured.out
