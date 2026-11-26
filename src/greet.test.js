@@ -13,3 +13,6 @@ test("greet levágja a felesleges szóközt", () => {
 test("greet üres névre hibát dob", () => {
   assert.throws(() => greet("   "), /nem lehet üres/);
 });
+test("greet több szavas nevet is kezel", () => {
+  assert.equal(greet("Kiss Tibor"), "Szia, Kiss Tibor!");
+});
