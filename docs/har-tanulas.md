@@ -88,6 +88,68 @@ A `.har/` könyvtár a repóba commitolt **szerződés** (contract): gépileg ol
 - **Commit gate:** a `stages.json`-ban beállított szabály (`mode: block`, `scope: worktrees`): a worktree-ben érvényes bizonyíték nélkül nem lehet commitolni. _(A 3. leckében próbáljuk ki.)_
 - **Mission Control:** helyi dashboard a repókról, slotokról, futásokról és bizonyítékokról.
 
+### Fő checkout és worktree: hol mi van?
+
+Egyszerű hasonlat: van egy dokumentumod, az az **eredeti**. Mielőtt egy kollégának (az ágensnek) odaadod szerkeszteni, lemásolod egy másik mappába. Ő a **másolatban** firkálhat, az eredeti nem sérül. Ha végzett, lefuttatod az ellenőrzéseket a másolaton, és ha minden rendben, átveszed a változtatásait. A „worktree" a másolat git-es neve: ugyanannak a repónak egy második munkamappája, saját branch-csel, közös `.git`-tel.
+
+```
+Egy git repó (közös .git)
+├── Fő checkout   ~/dev/github.com/cloudmentor/har-basic     branch: init
+│     └── .har/   contract + runs/ + validations/             a bizonyíték itt van
+└── Worktree      ~/worktrees/init-c706-har-agent-1-8a2b      branch: init-c706-har-agent-1-8a2b
+      └── ide szerkeszt az ágens, itt fut a verify, itt aktív a commit gate
+```
+
+| | Fő checkout | Worktree (slot) |
+| --- | --- | --- |
+| Szerep | az eredeti, te (az ember) itt dolgozol | a másolat, az ágens itt dolgozik |
+| Branch | `init` | `init-<sha4>-har-agent-<slot>-<rand4>` |
+| Commit gate | **nem véd** | **véd** (`scope: worktrees`) |
+| Bizonyíték (`runs/`, `validations/`) | itt tárolódik | innen keletkezik |
+
+Megfigyelésünk a har-basic-ben: a fő checkouton a `c2293bd` commit verify nélkül is átment, mert ott nincs gate. A verify közben a worktree-t ellenőrizte (a `treeHash` nem változott, a `changedFiles` üres). **A commit gate kipróbálásához a worktree-ben kell commitolni.**
+
+Mindig ellenőrizd, hol állsz:
+
+```bash
+pwd
+git branch --show-current
+```
+
+Ha a branch `init`, a fő checkouton vagy. Ha `init-c706-har-agent-1-8a2b`, a worktree-ben.
+
+Egy gyors kísérlet az izoláció megfigyelésére (veszélytelen):
+
+```bash
+cd ~/worktrees/init-c706-har-agent-1-8a2b
+touch proba.txt
+ls ~/dev/github.com/cloudmentor/har-basic
+rm ~/worktrees/init-c706-har-agent-1-8a2b/proba.txt
+```
+
+A `proba.txt` nem jelenik meg az eredeti mappában.
+
+### A branch és a worktree neve
+
+A név szándékosan szabályos, és a HAR erre épít:
+
+`<alap branch>-<commit eleje>-har-agent-<slot>-<véletlen 4 karakter>`
+
+| Rész | Jelentése |
+| --- | --- |
+| `init` | melyik branchből indult |
+| `c706` | melyik commitból (a `c706a47` eleje) |
+| `har-agent-1` | az 1-es slot |
+| `8a2b` | véletlen rész, hogy két launch neve ne ütközzön |
+
+A HAR a `-har-agent-<slot>-` mintával találja meg a worktree-ket (status, cleanup, Mission Control). Ezért **nem érdemes átnevezni**. A forráskódban nem találtam kapcsolót a név megadására (a main branch kódja alapján; a `har env launch --help` mutatja a telepített verzió kapcsolóit).
+
+Praktikus tippek:
+
+- **Ne gépeld be a nevet.** A glob kiegészíti: `cd ~/worktrees/*-har-agent-1-*` (ha csak egy ilyen van). Gyakori használatra alias a `~/.zshrc`-be: `alias w1='cd ~/worktrees/*-har-agent-1-*'`.
+- **Olvasható név a feladatnak:** `har env launch 1 --work-id "greet-tesztek"` (a CLI leírása szerint repo-szintű work unit azonosító, a `status` és a Mission Control mutatja). *Kipróbálandó.*
+- **Az útvonal:** a `har env status` kiírja a work dirt.
+
 ### A har-basic stage-ei
 
 | Stage        | Szint | Parancs                                       |
@@ -115,38 +177,7 @@ Fontos szabály: a commitot, a pusht és a lezárást **mindig ember végzi**.
 
 ---
 
-## 5. Tanulási út
-
-- [x] **1. Alapfogalmak:** harness, contract, slot, worktree, stage
-- [x] **2. Első kör:** `launch` → `verify --full` zöld (worktree: `init-c706-har-agent-1-8a2b`)
-- [ ] **3. Commit gate:** bukó teszttel kipróbálni, hogyan blokkol
-- [ ] **4. Testreszabás:** `stages.json`, saját stage, readiness smoke, `har env maintain`
-- [ ] **5. Ágens-integráció:** Claude Code + MCP (`har_launch_environment`), `AGENTS.md`
-- [ ] **6. Több ágens párhuzamosan:** slotok, Mission Control, OTel-telemetria
-- [ ] **7. Éles minta:** Docker sandbox, éjszakai ágens-VM (`mentor-agent-workspace`)
-- [ ] **8. Mérés és bizalom:** mit bizonyít a verify, és mit nem
-
----
-
-## 6. 1. lecke: ellenőrző kérdések
-
-Válaszolj a saját szavaiddal, aztán beszéljük át.
-
-**1. Miért jobb egy `.har/` contract, mint ha a README-ben, a `CLAUDE.md`-ben és a CI-yamlban is leírod, hogyan kell futtatni a projektet?**
-
-Válaszom:
-
-**2. Mi a különbség a `verify` és a `verify --full` között, és melyik stage-ek tartoznak a quick szintbe?**
-
-Válaszom:
-
-**3. (a 2. leckéből) Mi köti a bizonyítékot a kódhoz, hogy utólag ne lehessen átírni a kódot úgy, hogy a „pass" megmaradjon?**
-
-Válaszom:
-
----
-
-## 7. Tapasztalatok és hibakeresés (har-basic)
+## 5. Tapasztalatok és hibakeresés (har-basic)
 
 | Tünet                                                  | Ok                                                                                                  | Megoldás                                                                   |
 | ------------------------------------------------------ | --------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
@@ -157,6 +188,7 @@ Válaszom:
 | `.har/validations/` hiányzik                           | Takarítás után a mappa újra létrejön az első verify-nál                                             | Futtass `verify`-t                                                         |
 | Mission Control: _Worktree path is missing on disk_    | A dashboard a saját nézőpontjából ellenőrzi az útvonalat (Dockerben nem látja a host fájlrendszert) | `har env status` az igazság forrása. _(Forráskód alapján, ellenőrizendő.)_ |
 | A teardown után megmaradnak a naplók                   | Az állapot (slot, worktree) és a bizonyíték (`runs/`, `validations/`) külön él, szándékosan         | `har control reset --dry-run`, vagy `rm -rf .har/runs .har/validations`    |
+| A commit verify nélkül is átment | A fő checkouton commitoltál, ott nincs gate (`scope: worktrees`) | A commitot a worktree-ben végezd, `pwd` és `git branch --show-current` ellenőrzéssel |
 
 ### Általános tanulságok
 
@@ -165,13 +197,13 @@ Válaszom:
 
 ---
 
-## 8. Parancs-cheatsheet
+## 6. Parancs-cheatsheet
 
 ```bash
 har onboard                  # .har/ scaffold, prompt az ágensnek
 har worktree on              # worktree mód bekapcsolása a repóhoz
 har env launch 1             # slot indítása (worktree + branch + portok)
-har env status               # slotok és az érvényes beállítások
+har env status               # slotok és az érvényes beállítások (work dir is)
 har env verify 1             # quick szint
 har env verify 1 --full      # teljes pipeline, bizonyíték rögzítése
 har env teardown 1           # slot lezárása (a branch megmarad)
@@ -179,19 +211,20 @@ har env complete 1           # slot lezárása feladat végén
 har env maintain             # harness frissítés, drift-ellenőrzés
 har env cleanup              # elavult session worktree-k takarítása
 har control sync             # slot- és futásállapot küldése a Mission Controlnak
+pwd && git branch --show-current   # hol állok: fő checkout vagy worktree?
+cd ~/worktrees/*-har-agent-1-*     # belépés az 1-es slot worktree-ébe
 har control reset --dry-run  # Mission Control adat és helyi előzmények törlése (előbb dry-run!)
 ```
 
 ---
 
-## 9. Nyitott kérdések és bővítendő anyagok
+## 7. Nyitott kérdések és bővítendő anyagok
 
-- [ ] Hogyan viselkedik a commit gate bukó teszt esetén? (3. lecke)
+- [ ] Hogyan viselkedik a commit gate bukó teszt esetén a worktree-ben? (3. lecke)
 - [ ] Saját stage írása (pl. `shellcheck`, `terraform validate`) és a `readiness` smoke (4. lecke)
-- [ ] Hogyan hívja az ágens a harnesst MCP-n keresztül? (5. lecke)
-- [ ] Hogyan skálázódik több párhuzamos ágensre? (6. lecke)
-- [ ] Hogyan illeszthető a HAR az éjszakai ágens-VM-hez? (7. lecke)
-- [ ] Mit **nem** bizonyít a verify? (8. lecke)
+- [ ] Hogyan illeszthető a HAR az éjszakai ágens-VM-hez? (5. lecke)
+- [ ] Mit **nem** bizonyít a verify? (6. lecke)
+- [ ] A `--work-id` kapcsoló kipróbálása a launchnál (olvasható név a feladatnak)
 
 ## Források
 
